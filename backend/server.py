@@ -64,6 +64,10 @@ TREE_IMAGE_PATH = STATIC_DIR / 'sakura_tree.png'
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+@app.get("/")
+async def root():
+    return {"app": "IKIGAI", "status": "blooming", "docs": "/docs"}
+
 
 # ==================== HELPERS ====================
 def hash_password(pw: str) -> str:
