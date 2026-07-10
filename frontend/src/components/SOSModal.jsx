@@ -44,7 +44,7 @@ export const SOSModal = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-6"
          data-testid="sos-modal" onClick={onClose}>
-      <div className="absolute inset-0 bg-[#1F2A24]/55 backdrop-blur-md animate-fade-up"/>
+      <div className="absolute inset-0 animate-fade-up" style={{ background: "rgba(31,42,36,0.6)" }}/>
 
       <div className="relative w-full sm:max-w-xl bg-[#FAF7F1] sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden animate-fade-up max-h-[90vh] overflow-y-auto"
            onClick={e => e.stopPropagation()}>

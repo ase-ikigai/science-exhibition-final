@@ -5,6 +5,53 @@ import { SakuraTree } from "../components/SakuraTree";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "../context/AuthContext";
 
+const MEDITATE_PHASES = [
+  { label: "Breathe in",  secs: 4 },
+  { label: "Hold",        secs: 2 },
+  { label: "Breathe out", secs: 6 },
+  { label: "Rest",        secs: 2 },
+];
+
+const LandingMeditation = () => {
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const phase = MEDITATE_PHASES[phaseIdx];
+  useEffect(() => {
+    const t = setTimeout(
+      () => setPhaseIdx(i => (i + 1) % MEDITATE_PHASES.length),
+      phase.secs * 1000
+    );
+    return () => clearTimeout(t);
+  }, [phaseIdx, phase.secs]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
+         style={{ background: "var(--ikigai-bg)" }} data-testid="landing-loading">
+      <div className="flex items-center justify-center gap-2 mb-10">
+        <Flower2 className="w-4 h-4 text-[#E68AA1]" strokeWidth={1.5}/>
+        <span className="font-serif text-base tracking-[0.45em] text-[#1F2A24]">IKIGAI</span>
+      </div>
+
+      {/* Breathing circle */}
+      <div className="relative flex items-center justify-center mb-8" style={{ width: 160, height: 160 }}>
+        <div className="breathe-ring absolute rounded-full"
+             style={{ width: 160, height: 160, border: "1px solid rgba(230,138,161,0.35)" }}/>
+        <div className="breathe-circle absolute rounded-full"
+             style={{ width: 110, height: 110,
+               background: "radial-gradient(circle, rgba(245,210,221,0.92) 0%, rgba(230,138,161,0.55) 60%, rgba(230,138,161,0.15) 100%)" }}/>
+        <div className="absolute rounded-full"
+             style={{ width: 36, height: 36, background: "rgba(230,138,161,0.4)" }}/>
+      </div>
+
+      <p className="font-serif text-3xl text-[#1F2A24] mb-1">{phase.label}</p>
+      <p className="text-[10px] tracking-[0.35em] uppercase text-[#7A6F66] mb-8">{phase.secs} seconds</p>
+
+      <p className="text-sm text-[#7A6F66] max-w-[260px] leading-relaxed">
+        Your sanctuary is waking up. First load takes about 40 seconds — breathe until it's ready.
+      </p>
+    </div>
+  );
+};
+
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -29,17 +76,7 @@ export default function Landing() {
 
   // Auto-redirect logged-in users — they shouldn't see Landing again
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ikigai-bg)" }} data-testid="landing-loading">
-        <div className="text-center animate-fade-up">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Flower2 className="w-5 h-5 text-[#E68AA1]" strokeWidth={1.5}/>
-            <span className="font-serif text-lg tracking-[0.4em] text-[#1F2A24]">IKIGAI</span>
-          </div>
-          <p className="text-[10px] tracking-[0.45em] uppercase text-[#7A6F66]">opening your sanctuary…</p>
-        </div>
-      </div>
-    );
+    return <LandingMeditation />;
   }
   if (user) {
     if (user.role === "parent") return <Navigate to="/parent" replace/>;

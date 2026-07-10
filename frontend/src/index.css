@@ -367,3 +367,56 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .animate-spin-slow { animation: spin-slow 22s linear infinite; }
+
+/* ── Journal ───────────────────────────────────────────── */
+.journal-page {
+  position: relative;
+}
+.journal-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 35px,
+    rgba(31, 42, 36, 0.045) 35px,
+    rgba(31, 42, 36, 0.045) 36px
+  );
+  background-position: 0 56px;
+}
+
+/* ── Meditation breathing animation ───────────────────── */
+@keyframes breathe-in {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  40%  { transform: scale(1.65); opacity: 1; }
+  60%  { transform: scale(1.65); opacity: 0.95; }
+  80%  { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1);   opacity: 0.55; }
+}
+
+@keyframes breathe-ring {
+  0%   { transform: scale(0.95); opacity: 0.3; }
+  40%  { transform: scale(1.85); opacity: 0.6; }
+  60%  { transform: scale(1.85); opacity: 0.5; }
+  80%  { transform: scale(0.95); opacity: 0.25; }
+  100% { transform: scale(0.95); opacity: 0.3; }
+}
+
+.breathe-circle {
+  animation: breathe-in 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.breathe-ring {
+  animation: breathe-ring 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Performance: GPU-accelerate animated elements ────── */
+.animate-firefly, .petal {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+.tree-stage-canvas {
+  transform: translateZ(0);
+}
+.stage-layer {
+  backface-visibility: hidden;
+}

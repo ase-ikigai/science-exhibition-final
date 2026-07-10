@@ -3,6 +3,46 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { X, ArrowRight, Mail, Lock, User } from "lucide-react";
 
+const BREATHE_PHASES = [
+  { label: "Breathe in", duration: 4000 },
+  { label: "Hold", duration: 2000 },
+  { label: "Breathe out", duration: 6000 },
+  { label: "Rest", duration: 2000 },
+];
+
+const MeditationOverlay = ({ elapsed }) => {
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  useEffect(() => {
+    const total = BREATHE_PHASES[phaseIdx].duration;
+    const t = setTimeout(() => setPhaseIdx(i => (i + 1) % BREATHE_PHASES.length), total);
+    return () => clearTimeout(t);
+  }, [phaseIdx]);
+  const secs = Math.max(0, 50 - elapsed);
+
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl"
+         style={{ background: "rgba(250,247,241,0.97)", backdropFilter: "none" }}>
+      <p className="text-[10px] tracking-[0.4em] uppercase text-[#B89668] mb-6">IKIGAI is waking up · ~{secs}s</p>
+      <div className="relative flex items-center justify-center mb-6" style={{ width: 120, height: 120 }}>
+        <div className="breathe-ring absolute rounded-full"
+             style={{ width: 120, height: 120, border: "1.5px solid rgba(230,138,161,0.4)" }}/>
+        <div className="breathe-circle absolute rounded-full"
+             style={{ width: 80, height: 80,
+               background: "radial-gradient(circle, rgba(245,210,221,0.9) 0%, rgba(230,138,161,0.6) 60%, rgba(230,138,161,0.2) 100%)" }}/>
+        <div className="absolute rounded-full"
+             style={{ width: 28, height: 28, background: "rgba(230,138,161,0.45)" }}/>
+      </div>
+      <p className="font-serif text-2xl text-[#1F2A24] mb-1">{BREATHE_PHASES[phaseIdx].label}</p>
+      <p className="text-[10px] tracking-[0.3em] uppercase text-[#7A6F66] mt-1">
+        {phaseIdx === 0 ? "4 seconds" : phaseIdx === 1 ? "2 seconds" : phaseIdx === 2 ? "6 seconds" : "rest"}
+      </p>
+      <p className="text-xs text-[#7A6F66] mt-5 max-w-[200px] text-center leading-relaxed">
+        First load wakes the server from sleep. This is a one-time wait.
+      </p>
+    </div>
+  );
+};
+
 export const AuthModal = ({ mode, onClose, onSuccess }) => {
   const { login, signup } = useAuth();
   const [tab, setTab] = useState(mode || "signup");
@@ -11,6 +51,10 @@ export const AuthModal = ({ mode, onClose, onSuccess }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("teen");
   const [loading, setLoading] = useState(false);
+  const [loadingElapsed, setLoadingElapsed] = useState(0);
+  const [showMeditation, setShowMeditation] = useState(false);
+  const loadingStartRef = useRef(null);
+  const loadingTimerRef = useRef(null);
   const focusRef = useRef(null);
 
   // Focus only on mount + when tab switches — NOT on every onClose identity change
@@ -27,20 +71,40 @@ export const AuthModal = ({ mode, onClose, onSuccess }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const startLoadingTimer = () => {
+    loadingStartRef.current = Date.now();
+    setLoadingElapsed(0);
+    setShowMeditation(false);
+    loadingTimerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - loadingStartRef.current) / 1000);
+      setLoadingElapsed(elapsed);
+      if (elapsed >= 5) setShowMeditation(true);
+    }, 1000);
+  };
+
+  const stopLoadingTimer = () => {
+    clearInterval(loadingTimerRef.current);
+    setShowMeditation(false);
+    setLoadingElapsed(0);
+  };
+
   const submit = useCallback(async (e) => {
     e?.preventDefault?.();
     if (loading) return;
     setLoading(true);
+    startLoadingTimer();
     try {
       let user;
       if (tab === "signup") {
-        if (!name.trim()) { toast.error("Tell us your name"); setLoading(false); return; }
+        if (!name.trim()) { toast.error("Tell us your name"); setLoading(false); stopLoadingTimer(); return; }
         user = await signup({ name: name.trim(), email: email.trim().toLowerCase(), password, role });
       } else {
         user = await login({ email: email.trim().toLowerCase(), password });
       }
+      stopLoadingTimer();
       onSuccess?.(user);
     } catch (err) {
+      stopLoadingTimer();
       const detail = err?.response?.data?.detail;
       const msg = typeof detail === "string"
         ? detail
@@ -51,6 +115,7 @@ export const AuthModal = ({ mode, onClose, onSuccess }) => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, name, email, password, role, loading, login, signup, onSuccess]);
 
   return (
@@ -62,6 +127,7 @@ export const AuthModal = ({ mode, onClose, onSuccess }) => {
       {/* Sheet */}
       <div className="relative w-full sm:max-w-md bg-[#FAF7F1] sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden animate-fade-up"
            onClick={e => e.stopPropagation()}>
+        {showMeditation && <MeditationOverlay elapsed={loadingElapsed}/>}
         {/* Soft gradient top */}
         <div className="absolute top-0 inset-x-0 h-32 pointer-events-none"
              style={{ background: "linear-gradient(180deg, rgba(245,210,221,0.45) 0%, rgba(250,247,241,0) 100%)" }}/>

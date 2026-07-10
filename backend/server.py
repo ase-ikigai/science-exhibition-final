@@ -42,7 +42,7 @@ if not GROQ_API_KEY:
     logging.warning("GROQ_API_KEY not set — AI responses will use fallback text")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-async def call_groq(prompt: str, fallback: str) -> str:
+async def call_groq(prompt: str, fallback: str, max_tokens: int = 600) -> str:
     if not groq_client:
         return fallback
     try:
@@ -50,7 +50,7 @@ async def call_groq(prompt: str, fallback: str) -> str:
             groq_client.chat.completions.create,
             model='llama-3.3-70b-versatile',
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=300,
+            max_tokens=max_tokens,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -185,8 +185,9 @@ class FocusSessionRequest(BaseModel):
     task: Optional[str] = None
 
 class JournalEntryRequest(BaseModel):
-    prompt: str
+    prompt: Optional[str] = ""
     response: str
+    mood: Optional[str] = ""
 
 class CoachMessageRequest(BaseModel):
     message: str
@@ -581,8 +582,9 @@ async def create_journal(req: JournalEntryRequest, user: Dict = Depends(require_
     doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
-        "prompt": req.prompt,
+        "prompt": req.prompt or "",
         "response": req.response,
+        "mood": req.mood or "",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.journal_entries.insert_one(doc)
