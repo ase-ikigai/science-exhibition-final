@@ -1,0 +1,118 @@
+{
+  "theme": "LIGHT",
+  "archetype": "Organic & Earthy + Pastel & Soft (Japanese Zen)",
+  "design_philosophy": "Calm, Elegant, Emotional, Premium, Japanese-inspired, Minimalist but magical. A peaceful digital sanctuary.",
+  "typography": {
+    "heading_font": "Cormorant Garamond",
+    "body_font": "Outfit",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none font-light",
+      "h2": "text-3xl sm:text-4xl tracking-tight leading-tight font-light",
+      "h3": "text-2xl sm:text-3xl leading-snug font-medium",
+      "h4": "text-xl sm:text-2xl leading-snug",
+      "body": "text-base leading-relaxed font-light text-[#2D1B22]/80",
+      "caption": "text-sm tracking-[0.15em] uppercase text-[#8A7E82]"
+    }
+  },
+  "colors": {
+    "background": "#FAF9F6",
+    "surface": "#FFFFFF",
+    "primary": "#E68AA1",
+    "primary_hover": "#D4798F",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#D4E0D1",
+    "secondary_foreground": "#2D1B22",
+    "accent_pink": "#FFB7C5",
+    "accent_lavender": "#E6E6FA",
+    "accent_cream": "#F9F6F0",
+    "text_main": "#2D1B22",
+    "text_muted": "#8A7E82",
+    "border_subtle": "rgba(227, 181, 197, 0.2)",
+    "glass_bg": "rgba(255, 255, 255, 0.4)",
+    "glass_border": "rgba(255, 255, 255, 0.6)"
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-8 md:p-12 lg:p-16",
+    "bento_gap": "gap-8 lg:gap-12",
+    "card_padding": "p-8 sm:p-10",
+    "border_radius": "rounded-[2rem]",
+    "alignment": "Ma (間) - Intentional Negative Space. Generous margins, tall line heights, reduced density."
+  },
+  "surfaces": {
+    "glassmorphism_card": "bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(230,138,161,0.08)] rounded-[2rem]",
+    "solid_card": "bg-white border border-[#E68AA1]/10 shadow-[0_4px_20px_rgba(45,27,34,0.03)] rounded-[2rem]",
+    "interactive_card_hover": "hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(230,138,161,0.12)] transition-all duration-500 ease-out"
+  },
+  "animations": {
+    "page_transition": "opacity-0 animate-in fade-in duration-1000 ease-out",
+    "floating_element": "animate-[float_6s_ease-in-out_infinite]",
+    "button_hover": "transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]",
+    "tree_growth": "transition-all duration-1000 ease-in-out"
+  },
+  "components": {
+    "button_primary": "bg-[#E68AA1] text-white rounded-full px-8 py-4 font-medium tracking-wide hover:bg-[#D4798F] transition-all shadow-[0_4px_14px_rgba(230,138,161,0.4)]",
+    "button_secondary": "bg-white/50 backdrop-blur-md border border-[#E68AA1]/30 text-[#2D1B22] rounded-full px-8 py-4 font-medium hover:bg-white transition-all",
+    "input_field": "bg-white/50 border border-[#E68AA1]/20 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#E68AA1]/40 focus:border-transparent transition-all placeholder:text-[#8A7E82]",
+    "progress_bar": "h-1.5 bg-[#F9F6F0] rounded-full overflow-hidden",
+    "progress_fill": "h-full bg-gradient-to-r from-[#FFB7C5] to-[#E68AA1] rounded-full transition-all duration-1000 ease-out",
+    "mood_badge": "inline-flex items-center px-4 py-2 rounded-full bg-white/60 backdrop-blur-sm border border-white/80 text-sm font-medium text-[#2D1B22]"
+  },
+  "screens": {
+    "landing_page": {
+      "layout": "Grid split: Left 1/2 fixed Sakura tree graphic (magical, immersive). Right 1/2 scrollable content. Soft cream background gradient.",
+      "hero_section": "Cormorant Garamond H1, float animations on floating petals, Primary/Secondary buttons side by side."
+    },
+    "conversational_onboarding": {
+      "layout": "Centered constrained max-w-2xl. One question at a time. Soft fade in/out transitions.",
+      "interaction": "Large selectable glassmorphic bento boxes for choices, typing indicator for AI questions. Minimalist top progress bar."
+    },
+    "home_dashboard": {
+      "layout": "Grid cols-1 md:cols-12 gap-8 lg:gap-12. Tree visualization takes center stage (col-span-12 lg:col-span-7). Mood/streak/routine cards on the side (col-span-5).",
+      "tree_visualization": "Large Glassmorphic container acting as a window to the sanctuary. Fireflies particles floating around the tree."
+    },
+    "mood_dump": {
+      "layout": "Distraction-free writing zone. Soft lavender background tint. Text area blends into the background.",
+      "feedback": "AI reflection cards fade in elegantly below the text area with glassmorphism styling."
+    },
+    "life_dashboard": {
+      "layout": "Bento grid layout for mental health, sleep, focus, fitness, confidence, motivation.",
+      "visuals": "Each category represented as a 'branch' of growth. Soft color coding (lavender for sleep, matcha for focus, pink for mental health)."
+    }
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero_sakura_reference",
+        "url": "https://images.pexels.com/photos/22619493/pexels-photo-22619493.jpeg",
+        "description": "Beautiful cherry blossom trees with pink flowers glowing in spring sunlight. Use as inspiration or background texture."
+      },
+      {
+        "category": "texture_gradient_darker",
+        "url": "https://images.unsplash.com/photo-1547623641-d2c56c03e2a7",
+        "description": "abstract gradient sky from warm to cool tones. Good for mood/journaling screens."
+      },
+      {
+        "category": "texture_gradient_light",
+        "url": "https://images.unsplash.com/photo-1605184861755-8f190fea96a5",
+        "description": "pink and white light illustration. Ideal for soft app backgrounds."
+      },
+      {
+        "category": "zen_garden_motif",
+        "url": "https://images.pexels.com/photos/35298173/pexels-photo-35298173.jpeg",
+        "description": "Serene zen garden scene. Useful for mindfulness/meditation sections."
+      }
+    ],
+    "ai_generation_prompts": {
+      "main_sakura_tree": "Breathtaking mature cherry blossom tree (Sakura) on left side. Ancient Sakura with thick textured trunk, natural branching, thousands of pink blossoms, floating petals drifting slowly, soft glow, cinematic lighting, set against a soft cream background, highly detailed, premium illustration, 8k resolution, serene, magical.",
+      "tree_evolution_stages": "Seedling, sapling, young tree, mature sakura, ancient blooming sakura with magical fireflies."
+    }
+  },
+  "accessibility_and_testing": {
+    "data_testid_requirement": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case. Example: data-testid='sign-in-button'.",
+    "contrast_ratio": "Ensure text contrast meets WCAG AA standards. Use text-[#2D1B22] over light backgrounds. Avoid pure white text on light pinks."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "Light weight (strokeWidth 1.5), soft rounded edges. Use sparingly to reduce visual noise."
+  }
+}
