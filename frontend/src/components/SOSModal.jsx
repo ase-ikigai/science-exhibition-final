@@ -26,7 +26,7 @@ export const SOSModal = ({ onClose }) => {
         right_now: a.today_actions || [],
         reframe: a.reminder || "",
         next_hour: a.habit_suggestion || "",
-        reach_out: "If a trusted person comes to mind, even one short message would help.",
+        reach_out: a.reach_out || "",
         safety: "",
       });
     } catch {

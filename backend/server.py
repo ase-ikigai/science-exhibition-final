@@ -57,6 +57,43 @@ async def call_groq(prompt: str, fallback: str, max_tokens: int = 600) -> str:
         logging.error(f"Groq error: {e}")
         return fallback
 
+
+def parse_groq_json(raw: str, required_keys: set) -> dict | None:
+    """Extract and parse JSON from a Groq response. Returns None if keys are missing."""
+    if not raw:
+        return None
+    text = raw.strip()
+    # Strip markdown code fences
+    if "```" in text:
+        import re as _re
+        m = _re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, _re.DOTALL)
+        text = m.group(1) if m else text.replace("```json", "").replace("```", "").strip()
+    # Find the first { … } block in case model adds preamble text
+    if not text.startswith("{"):
+        start = text.find("{")
+        if start < 0:
+            return None
+        text = text[start:]
+    # Trim to first balanced JSON object
+    depth = 0
+    for i, ch in enumerate(text):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                text = text[: i + 1]
+                break
+    try:
+        data = json.loads(text)
+    except Exception:
+        return None
+    # Reject if any required key is missing
+    if required_keys and not required_keys.issubset(data.keys()):
+        logging.warning(f"Groq JSON missing keys. Got: {set(data.keys())} Expected: {required_keys}")
+        return None
+    return data
+
 STATIC_DIR = ROOT_DIR / 'static'
 STATIC_DIR.mkdir(exist_ok=True)
 TREE_IMAGE_PATH = STATIC_DIR / 'sakura_tree.png'
@@ -374,26 +411,24 @@ async def mood_dump(req: MoodDumpRequest, user: Dict = Depends(require_teen)):
 
     if groq_client and text.strip():
         prompt = (
-            f"You are IKIGAI, a warm and insightful companion for a teen named {name}.\n"
-            f"They have shared the following mood dump: \"{text}\"\n"
-            f"Life areas they tagged: {areas}\n"
-            + (f"Their personal goals: {goals}\n" if goals else "")
-            + "\nAnalyze this with genuine empathy and return ONLY a raw JSON object (no markdown, no backticks, no extra text) with these exact keys:\n"
-            "- \"themes\": list of 3 single-word emotional themes you detect (e.g. \"overwhelmed\", \"lonely\", \"hopeful\")\n"
-            "- \"emotions\": list of 2-3 primary emotions beneath the surface of what they wrote\n"
-            "- \"validation\": 2 sentences that specifically acknowledge what THEY wrote — name the exact feeling, don't be generic\n"
-            "- \"insight\": 1 sentence revealing something they might not have noticed about their own pattern or feeling\n"
-            "- \"perspective\": 1-2 sentences offering a realistic, honest reframe that respects how hard this actually is\n"
-            "- \"action\": ONE specific, concrete action for the next 30 minutes that directly addresses what they shared — not generic advice\n"
-            "- \"suggestion\": ONE small daily habit for the next few days that connects directly to what they need right now\n\n"
-            "Be specific to their actual words. Avoid clichés. Give real help."
+            f"You are IKIGAI — a warm, real friend for a teen named {name}. Not a chatbot, not a therapist. A friend who listens closely and gives honest, grounded help.\n"
+            f"They shared: \"{text}\"\n"
+            f"Life areas: {areas}\n"
+            + (f"Their goals: {goals}\n" if goals else "")
+            + "\nReturn ONLY a raw JSON object (no markdown, no backticks, no extra text) with EXACTLY these keys:\n"
+            "- \"themes\": list of 3 single-word emotional themes (e.g. \"overwhelmed\", \"lonely\", \"hopeful\")\n"
+            "- \"emotions\": list of 2-3 primary emotions beneath the surface\n"
+            "- \"validation\": 2 sentences that specifically name what THEY wrote — use their words, no generic phrases\n"
+            "- \"insight\": 1 sentence revealing a pattern or something they might not have noticed\n"
+            "- \"perspective\": 1-2 sentences offering a realistic reframe — not false positivity, something true\n"
+            "- \"action\": ONE specific physical or social action for the next 30 minutes — e.g. 'go for a 10-minute walk outside', 'text one friend something small', 'stretch your body for 5 minutes', 'drink a full glass of water slowly'. NOT app-related.\n"
+            "- \"suggestion\": ONE tiny daily habit for the coming week that directly addresses what they need\n\n"
+            "Sound like a caring friend, not a product. Be specific to their actual words."
         )
         try:
             raw = await call_groq(prompt, "")
-            if raw:
-                analysis = json.loads(raw)
-            else:
-                analysis = fallback
+            required = {"themes", "validation", "action"}
+            analysis = parse_groq_json(raw, required) or fallback
         except Exception:
             analysis = fallback
     else:
@@ -452,24 +487,22 @@ async def submit_negative_thought(req: NegativeThoughtRequest, user: Dict = Depe
 
     if groq_client:
         prompt = (
-            f"You are IKIGAI, a CBT-trained companion for a teen named {name}.\n"
-            f"They shared this negative thought: \"{thought}\"\n\n"
-            "Apply CBT (Cognitive Behavioral Therapy) principles to this specific thought and return ONLY a raw JSON object (no markdown, no backticks) with these exact keys:\n"
-            "- \"thought_pattern\": the precise cognitive distortion this thought represents. Choose the most accurate one from: "
-            "All-or-nothing thinking, Overgeneralization, Mental filter, Disqualifying the positive, Mind reading, "
-            "Fortune telling, Catastrophizing, Emotional reasoning, Should statements, Labeling, Personalization\n"
-            "- \"challenge\": ONE direct Socratic question that specifically challenges THIS thought — make it feel personal, not textbook\n"
-            "- \"evidence_for\": list of exactly 2 things the teen genuinely feels support this thought — acknowledge their reality with empathy\n"
-            "- \"evidence_against\": list of exactly 3 specific counter-evidences or alternative perspectives for THIS exact thought\n"
-            "- \"reframe\": A specific balanced alternative to their exact thought — not generic positivity, but a realistic, compassionate middle ground that they could actually believe\n\n"
-            "Address their exact thought word for word. Do not give generic CBT templates."
+            f"You are a compassionate older friend talking to {name}, a teen. Not a therapist — a real friend who has been through hard times and knows how to help.\n"
+            f"They shared this thought: \"{thought}\"\n\n"
+            "Use CBT principles to gently challenge it. Sound human — skip dry textbook language.\n"
+            "If this thought sounds very dark or suggests they might hurt themselves, include a warm encouragement to talk to someone they trust.\n\n"
+            "Return ONLY a raw JSON object (no markdown, no backticks, no extra text) with EXACTLY these keys:\n"
+            "- \"thought_pattern\": the cognitive distortion this represents (e.g. All-or-nothing thinking, Catastrophizing, Overgeneralization)\n"
+            "- \"challenge\": ONE honest question that makes them pause and reconsider — personal to their exact thought, not textbook\n"
+            "- \"evidence_for\": list of exactly 2 things about why this thought feels true right now — empathetic, not dismissive\n"
+            "- \"evidence_against\": list of exactly 3 specific reasons or moments that contradict this thought\n"
+            "- \"reframe\": a kinder, more realistic version of this thought they could actually believe, followed by ONE concrete physical reset like 'stand up and shake your hands for 30 seconds' or 'go outside for 5 minutes and breathe'\n\n"
+            "Every field must respond directly to their specific words. Do not copy generic phrases."
         )
         try:
             raw = await call_groq(prompt, "")
-            if raw:
-                analysis = json.loads(raw)
-            else:
-                analysis = fallback
+            required = {"thought_pattern", "challenge", "evidence_for", "evidence_against", "reframe"}
+            analysis = parse_groq_json(raw, required) or fallback
         except Exception:
             analysis = fallback
     else:
@@ -523,20 +556,27 @@ async def im_not_okay(req: MoodDumpRequest, user: Dict = Depends(require_teen)):
 
     if groq_client:
         prompt = (
-            f"You are IKIGAI, a deeply compassionate companion for a teen named {name} who is struggling right now.\n"
-            f"They shared: \"{text}\"\n"
-            + (f"Background context about them: {stressors}\n" if stressors else "")
-            + "\nThis is serious — they need REAL help, not platitudes. Give them practical support.\n\n"
-            "Return ONLY a raw JSON object (no markdown, no backticks) with these exact keys:\n"
-            "- \"validation\": 2-3 sentences that specifically reflect back what THEY described — name the exact situation they're in. Make them feel truly heard, not just 'validated'.\n"
-            "- \"today_actions\": list of exactly 3 concrete actions for RIGHT NOW or the next few hours — be specific, sequential, and realistic for someone who is struggling. Include one grounding technique, one basic self-care, and one small social or reaching-out step.\n"
-            "- \"habit_suggestion\": ONE small daily habit (under 5 minutes) that directly addresses the root of what they shared — not generic\n"
-            "- \"reminder\": ONE honest, hopeful sentence that feels true rather than hollow — avoid clichés\n\n"
-            "Do not give generic wellness advice. Respond to what they actually wrote."
+            f"You are a caring older friend — warm, real, not a bot — talking directly to {name} who said: \"{text}\"\n"
+            + (f"Things that usually stress them: {stressors}\n" if stressors else "")
+            + "\nIMPORTANT RULES:\n"
+            "1. Every single response must be 100% different based on what they actually wrote — read their specific words and respond to THAT exact problem. No template answers.\n"
+            "2. today_actions must solve THEIR specific situation right now. If they're overwhelmed with school → suggest steps for that. If they feel lonely → suggest something social. If they feel physically bad → suggest body care. Never give the same 3 steps twice.\n"
+            "3. Include at least one physical action (stretch, step outside, splash cold water on face, lie down, go for a short walk).\n"
+            "4. Include at least one social action (text a friend, call someone, sit near a family member).\n"
+            "5. If they mention self-harm, feeling hopeless, or wanting to disappear — the reach_out field MUST include a gentle but clear nudge to contact a trusted adult or crisis line (e.g. 'If this feeling gets heavier, please tell an adult you trust or text a crisis line — in many countries you can text HOME to 741741').\n\n"
+            "Return ONLY a raw JSON object (no markdown, no backticks) with EXACTLY these keys:\n"
+            "- \"validation\": 2-3 sentences using their exact words — show you actually read what they wrote\n"
+            "- \"questions\": list of exactly 2 gentle questions specific to their situation\n"
+            "- \"today_actions\": list of exactly 3 concrete steps tailored to THEIR specific problem — mix physical + social + mental; all doable in the next hour with zero prep\n"
+            "- \"habit_suggestion\": ONE tiny daily habit under 5 minutes that directly targets what they described\n"
+            "- \"reminder\": ONE honest sentence a real friend would say — not generic, directly about what they shared\n"
+            "- \"reach_out\": if situation sounds serious or heavy, 1-2 sentences gently suggesting they talk to a trusted person or crisis line; otherwise an empty string\n\n"
+            "Read their message carefully. Every field must reflect what THEY specifically wrote."
         )
         try:
             raw = await call_groq(prompt, "")
-            analysis = json.loads(raw) if raw else fallback
+            required = {"validation", "today_actions", "habit_suggestion", "reminder"}
+            analysis = parse_groq_json(raw, required) or fallback
         except Exception:
             analysis = fallback
     else:
@@ -1741,34 +1781,34 @@ async def keep_going(req: KeepGoingRequest, user: Dict = Depends(require_teen)):
             context_parts.append(f"What they shared: \"{message}\"")
         if goals:
             context_parts.append(f"Their goals: {goals}")
-        if life_now:
-            context_parts.append(f"Their life situation: {life_now[:200]}")
+        # Do NOT include lifeNow — it can contain role/profession info that confuses the AI
         if vision:
             context_parts.append(f"Their one-month vision: {vision[:200]}")
         if streak > 0:
-            context_parts.append(f"Current streak: {streak} days")
+            context_parts.append(f"They've shown up for {streak} days in a row.")
         context_str = "\n".join(context_parts)
 
         prompt = (
-            f"You are IKIGAI, a compassionate motivational companion for a teen named {name} who feels like giving up.\n"
-            + (context_str + "\n" if context_str else "")
-            + f"Their tree is at the '{tree_stage}' stage — they've made real progress.\n\n"
-            "They need REAL support, not empty encouragement. Help them reconnect with their 'why' and find one tiny step forward.\n\n"
+            f"You are a caring, real companion talking to {name}, who is feeling burnt out and wants to quit.\n"
+            "CRITICAL: You are talking to a PERSON who is struggling — do NOT mention apps, tools, wellness journeys, or any platform. "
+            "Do NOT say things like 'owner of this app' or reference any role or profession. Treat them purely as a human being.\n"
+            + (f"Context:\n{context_str}\n" if context_str else "")
+            + "\nSound like a wise older friend who has been through burnout before — warm, grounded, real. "
+            "Suggest actual physical or social habits: going outside, stretching, talking to someone, drinking water, lying down, calling a friend. "
+            "If the situation sounds very serious or they mention self-harm, include a gentle note to reach out to a trusted person.\n\n"
             "Return ONLY a raw JSON object (no markdown, no backticks) with these exact keys:\n"
-            "- \"opening\": 2 sentences that directly respond to their specific situation — validate that wanting to quit is understandable RIGHT NOW for THEM, not generic\n"
-            "- \"questions\": list of 3 honest, Socratic questions that help them reflect — personalized to what they shared\n"
-            "- \"why_started\": 2 sentences reminding them of their original motivation — if you know their goals, reference them specifically\n"
-            "- \"contrast\": 2 sentences painting the contrast between where they started and the version of themselves they were moving toward\n"
-            "- \"one_small_step\": ONE ultra-specific action for RIGHT NOW that takes under 2 minutes — make it concrete and easy enough that even a burned-out person could do it\n"
-            "- \"if_still_quitting\": 1-2 sentences for the case where they still want to quit — give them permission to rest without shame, while leaving a door open\n\n"
-            "Be real, warm, and specific. No hollow encouragement."
+            "- \"opening\": 2 sentences responding to exactly what they shared — if they said 'I'm sad', address sadness specifically. Never be generic.\n"
+            "- \"questions\": list of 3 honest questions that help THEM think — personalised to what they wrote\n"
+            "- \"why_started\": 2 sentences about their specific situation or goals — what was the original spark?\n"
+            "- \"contrast\": 2 sentences about who they were trying to become vs where they feel stuck right now\n"
+            "- \"one_small_step\": ONE ultra-concrete physical or social action they can do in the next 5 minutes — not an app feature, a real-life action (e.g. 'Step outside and breathe cold air for 60 seconds' or 'Text one person right now')\n"
+            "- \"if_still_quitting\": 1-2 gentle sentences giving permission to rest without shame\n\n"
+            "Every field must directly address what they actually wrote. Never copy the fallback phrasing."
         )
         try:
             raw = await call_groq(prompt, "")
-            if raw:
-                data = json.loads(raw)
-            else:
-                data = fallback
+            required = {"opening", "one_small_step", "if_still_quitting"}
+            data = parse_groq_json(raw, required) or fallback
         except Exception:
             data = fallback
     else:

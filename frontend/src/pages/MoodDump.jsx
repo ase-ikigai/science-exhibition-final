@@ -105,15 +105,15 @@ export default function MoodDump() {
     setLoading(true);
     try {
       const { data } = await client.post("/mood-dump", { text, areas, image_base64: imageB64 });
+      setLoading(false);
       setFresh(data);
       setText(""); setAreas([]); clearImage();
-      await load();
+      load();
       setTimeout(() => freshRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       toast.success("A petal noted 🌸");
     } catch {
-      toast.error("Could not save");
-    } finally {
       setLoading(false);
+      toast.error("Could not save");
     }
   };
 
@@ -125,15 +125,15 @@ export default function MoodDump() {
     setLoading(true);
     try {
       const { data } = await client.post("/mood-dump/negative-thoughts", { thought: negativethought });
+      setLoading(false);
       setFresh(data);
       setNegativethought("");
-      await loadCbt();
+      loadCbt();
       setTimeout(() => freshRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       toast.success("Let's reframe that 🌸");
     } catch {
-      toast.error("Could not analyze");
-    } finally {
       setLoading(false);
+      toast.error("Could not analyze");
     }
   };
 
@@ -148,16 +148,16 @@ export default function MoodDump() {
         text: notOkayProblem,
         areas: notOkayContext ? [notOkayContext] : [],
       });
+      setLoading(false);
       setFresh(data);
       setNotOkayProblem("");
       setNotOkayContext("");
-      await loadNotOkay();
+      loadNotOkay();
       setTimeout(() => freshRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       toast.success("I'm here with you 🌸");
     } catch {
-      toast.error("Could not process");
-    } finally {
       setLoading(false);
+      toast.error("Could not process");
     }
   };
 
@@ -173,7 +173,7 @@ export default function MoodDump() {
         {/* Tabs */}
         <div className="flex gap-2 mb-8">
           <button
-            onClick={() => setTab("mood")}
+            onClick={() => { setTab("mood"); setFresh(null); }}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
               tab === "mood"
                 ? "bg-[#E68AA1] text-white"
@@ -184,7 +184,7 @@ export default function MoodDump() {
             General Mood
           </button>
           <button
-            onClick={() => setTab("thoughts")}
+            onClick={() => { setTab("thoughts"); setFresh(null); }}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
               tab === "thoughts"
                 ? "bg-[#B89668] text-white"
@@ -411,10 +411,12 @@ export default function MoodDump() {
           </div>
         )}
 
-        {/* Fresh card — premium 5-part summary */}
+        {/* Fresh card — use the right card per tab */}
         {fresh && !loading && (
           <div ref={freshRef} className="mt-10" data-testid="mood-fresh">
-            <ReflectionCard item={fresh} highlight/>
+            {tab === "mood"     && <ReflectionCard item={fresh} highlight/>}
+            {tab === "thoughts" && <CBTCard item={fresh} highlight/>}
+            {tab === "notokay"  && <NotOkayCard item={fresh} highlight/>}
           </div>
         )}
 
