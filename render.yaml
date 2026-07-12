@@ -29,8 +29,9 @@ services:
     runtime: static
     plan: free
     region: oregon
-    buildCommand: cd frontend && yarn install --frozen-lockfile && yarn build
-    staticPublishPath: frontend/build
+    rootDir: frontend
+    buildCommand: yarn install --frozen-lockfile && yarn build
+    staticPublishPath: build
     pullRequestPreviewsEnabled: false
     routes:
       - type: rewrite
